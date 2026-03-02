@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id               String        @id @default(uuid())
+  email            String        @unique
+  password         String
+  fullName         String
+  phone            String?
+  age              Int?
+  gender           String?
+  state            String?
+  district         String?
+  category         String?       // SC, ST, OBC, General, Minority
+  annualIncome     Float?
+  occupation       String?
+  education        String?
+  aadhaarNumber    String?
+  panNumber        String?
+  bankAccountNo    String?
+  bankIfsc         String?
+  profileCompletion Int          @default(10)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  applications     Application[]
+  complaints       Complaint[]
+  documents        Document[]
+}
+
+model Scheme {
+  id              String        @id @default(uuid())
+  title           String
+  department      String
+  ministry        String
+  benefit         String
+  benefitAmount   String?
+  category        String[]
+  state           String        @default("All India")
+  description     String
+  eligibility     String[]
+  documents       String[]
+  applicationLink String
+  deadline        String?
+  isCentral       Boolean       @default(true)
+  isActive        Boolean       @default(true)
+  minAge          Int?
+  maxAge          Int?
+  maxIncome       Float?
+  genderReq       String?       // "Male", "Female", "All"
+  categoryReq     String[]      // SC, ST, OBC, General, etc.
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  applications    Application[]
+  complaints      Complaint[]
+}
+
+model Application {
+  id              String        @id @default(uuid())
+  userId          String
+  schemeId        String
+  status          ApplicationStatus @default(PENDING)
+  referenceNumber String        @unique
+  notes           String?
+  appliedAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheme          Scheme        @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  complaints      Complaint[]
+
+  @@index([userId])
+  @@index([schemeId])
+}
+
+model Complaint {
+  id              String        @id @default(uuid())
+  userId          String
+  applicationId   String?
+  schemeId        String?
+  category        String
+  subject         String
+  description     String
+  status          ComplaintStatus @default(OPEN)
+  priority        Priority       @default(MEDIUM)
+  resolution      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application     Application?  @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  scheme          Scheme?       @relation(fields: [schemeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+model Document {
+  id              String        @id @default(uuid())
+  userId          String
+  fileName        String
+  originalName    String
+  fileType        String
+  fileSize        Int
+  category        String        // "aadhaar", "pan", "income_cert", etc.
+  filePath        String
+  extractedData   Json?
+  ocrStatus       OcrStatus     @default(PENDING)
+  uploadedAt      DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum ApplicationStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum OcrStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}

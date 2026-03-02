@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Zone {
+  id                 String        @id @default(uuid())
+  name               String
+  state              String
+  district           String
+  ward               String
+  lat                Float
+  lng                Float
+  population_estimate Int          @default(5000)
+  is_urban           Boolean       @default(false)
+  analytics          ZoneAnalytics?
+  profiles           SyntheticProfile[]
+}
+
+model ZoneAnalytics {
+  id                   String   @id @default(uuid())
+  zone_id              String   @unique
+  zone                 Zone     @relation(fields: [zone_id], references: [id], onDelete: Cascade)
+  eligible_count       Int      @default(0)
+  applied_count        Int      @default(0)
+  gap_count            Int      @default(0)
+  gap_rate_pct         Float    @default(0)
+  ngo_roi_score        Float    @default(0)
+  top_document_barrier String?
+  top_scheme_gap       String?
+  ai_narrative         String?
+  scheme_gaps          Json?    // { schemeId: { title, eligible, applied, gap } }
+  barrier_breakdown    Json?    // { "no_income_cert": 142, "no_bank_account": 98, ... }
+  dominant_demographics Json?   // { category, age_group, gender, occupation }
+  computed_at          DateTime @default(now())
+}
+
+model SyntheticProfile {
+  id                  String   @id @default(uuid())
+  zone_id             String
+  zone                Zone     @relation(fields: [zone_id], references: [id], onDelete: Cascade)
+  state               String
+  district            String
+  ward                String
+  age                 Int
+  gender              String
+  category            String   // SC / ST / OBC / General / Minority
+  annual_income       Float
+  occupation          String
+  education           String   // Illiterate / Primary / Secondary / Graduate
+  has_aadhaar         Boolean  @default(false)
+  has_income_cert     Boolean  @default(false)
+  has_caste_cert      Boolean  @default(false)
+  has_bank_account    Boolean  @default(false)
+  eligible_scheme_ids String[] @default([])
+  applied_scheme_ids  String[] @default([])
+  created_at          DateTime @default(now())
+
+  @@index([zone_id])
+  @@index([state])
+}
+
+model NgoScheme {
+  id                   String   @id
+  title                String
+  category             String
+  benefit              String
+  benefit_amount       String?
+  min_age              Int?
+  max_age              Int?
+  max_income           Float?
+  gender_req           String?
+  category_req         String[] @default([])
+  requires_aadhaar     Boolean  @default(true)
+  requires_income_cert Boolean  @default(false)
+  requires_caste_cert  Boolean  @default(false)
+  requires_bank_account Boolean @default(false)
+}
+
+model NgoUser {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String
+  organization String
+  created_at   DateTime @default(now())
+}
