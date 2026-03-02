@@ -1,4 +1,4 @@
-const BASE = 'https://sabal-ngo-api.onrender.com/api';
+const BASE = import.meta.env.VITE_API_URL || 'https://sabal-ngo-api.onrender.com/api';
 
 function authHeaders(): HeadersInit {
     const token = localStorage.getItem('sabal_ngo_token');

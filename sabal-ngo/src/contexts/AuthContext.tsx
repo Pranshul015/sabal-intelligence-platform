@@ -13,7 +13,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     async function login(email: string, password: string) {
-        const res = await fetch('/api/auth/login', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://sabal-ngo-api.onrender.com/api';
+        const res = await fetch(`${apiUrl}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
