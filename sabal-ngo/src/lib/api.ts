@@ -1,4 +1,4 @@
-const BASE = '/api';
+const BASE = 'https://sabal-ngo-api.onrender.com/api';
 
 function authHeaders(): HeadersInit {
     const token = localStorage.getItem('sabal_ngo_token');
