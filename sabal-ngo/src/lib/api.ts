@@ -1,6 +1,5 @@
-const BASE = import.meta.env.VITE_API_URL || 'https://sabal-ngo-api.onrender.com/api';
-
-function authHeaders(): HeadersInit {
+const ENV_URL = import.meta.env.VITE_API_URL;
+const BASE = (ENV_URL && ENV_URL.trim() !== '') ? ENV_URL : 'https://sabal-ngo-api.onrender.com/api'; function authHeaders(): HeadersInit {
     const token = localStorage.getItem('sabal_ngo_token');
     return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
 }
