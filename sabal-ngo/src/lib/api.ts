@@ -7,7 +7,20 @@ function authHeaders(): HeadersInit {
 
 async function get<T>(path: string): Promise<T> {
     const res = await fetch(`${BASE}${path}`, { headers: authHeaders() });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Request failed'); }
+    if (!res.ok) {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        if (isJson) {
+            const e = await res.json();
+            throw new Error(e.error || 'Request failed');
+        } else {
+            const text = await res.text();
+            throw new Error(`Server Error (${res.status}): ${text.substring(0, 100)}`);
+        }
+    }
+    const isJson = res.headers.get('content-type')?.includes('application/json');
+    if (!isJson) {
+        throw new Error('Unexpected non-JSON response from server');
+    }
     return res.json();
 }
 

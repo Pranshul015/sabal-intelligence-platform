@@ -19,7 +19,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
         });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Login failed'); }
+        if (!res.ok) {
+            const isJson = res.headers.get('content-type')?.includes('application/json');
+            if (isJson) {
+                const e = await res.json();
+                throw new Error(e.error || 'Login failed');
+            } else {
+                const text = await res.text();
+                throw new Error(`Server Error (${res.status}): ${text.substring(0, 100)}`);
+            }
+        }
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        if (!isJson) {
+            const text = await res.text();
+            throw new Error(`Unexpected non-JSON response: ${text.substring(0, 100)}`);
+        }
         const data = await res.json();
         setToken(data.token);
         setUser(data.user);
